@@ -1,5 +1,4 @@
 // script.js
-
 const products = [
   { id: 1, name: "Product 1", price: 10 },
   { id: 2, name: "Product 2", price: 20 },
@@ -8,62 +7,111 @@ const products = [
   { id: 5, name: "Product 5", price: 50 },
 ];
 
-// Function to render the product list
-function renderProductList() {
-  const productList = document.getElementById("product-list");
-  productList.innerHTML = "";
+// DOM elements
+const productList = document.getElementById("product-list");
+const cartList = document.getElementById("cart-list");
+const clearCartBtn = document.getElementById("clear-cart-btn");
 
-  products.forEach(product => {
+// Cart data
+let cart = [];
+
+// Render product list
+function renderProducts() {
+  products.forEach((product) => {
     const li = document.createElement("li");
-    li.innerHTML = `
-      ${product.name} - $${product.price}
-      <button onclick="addToCart(${product.id})">Add to Cart</button>
-    `;
+    li.innerHTML = `${product.name} - $${product.price} <button class="add-to-cart-btn" data-id="${product.id}">Add to Cart</button>`;
     productList.appendChild(li);
   });
 }
 
-// Function to render the shopping cart
+// Render cart list
 function renderCart() {
-  const cartList = document.getElementById("cart-list");
   cartList.innerHTML = "";
-
-  const cart = getCart();
-  cart.forEach(item => {
+  cart.forEach((item) => {
     const li = document.createElement("li");
-    li.innerHTML = `${item.name} - $${item.price}`;
+    li.innerHTML = `${item.name} - $${item.price} <button class="remove-from-cart-btn" data-id="${item.id}">Remove from Cart</button>`;
     cartList.appendChild(li);
   });
 }
 
-// Function to get the cart from session storage
-function getCart() {
-  return JSON.parse(sessionStorage.getItem("cart")) || [];
-}
-
-// Function to save the cart to session storage
-function saveCart(cart) {
-  sessionStorage.setItem("cart", JSON.stringify(cart));
-}
-
-// Function to add a product to the cart
+// Add item to cart
 function addToCart(productId) {
-  const product = products.find(p => p.id === productId);
-  const cart = getCart();
-  cart.push(product);
-  saveCart(cart);
-  renderCart();
+    console.log('cart before adding', cart);
+  const productToAdd = products.find((product) => product.id === productId);
+  if (productToAdd) {
+    cart.push(productToAdd);
+    sessionStorage.setItem("cart", JSON.stringify(cart));
+    renderCart();
+    console.log('cart after adding', cart);
+  }
 }
 
-// Function to clear the cart
+// Remove item from cart
+function removeFromCart(productId) {
+    console.log('cart before removing', cart);
+  cart = cart.filter((item) => item.id !== productId);
+  console.log('cart after removing', cart);
+  sessionStorage.setItem("cart", JSON.stringify(cart));
+  renderCart();
+
+  //----same thing with S solution using arr.findIndex
+  // const productIndex = cart.findIndex((product) => product.id === productId);
+  //     if (productIndex > -1) {
+  //       cart.splice(productIndex, 1);
+  //       sessionStorage.setItem("cart", JSON.stringify(cart));
+  //       renderCart();
+  //     }
+}
+
+// Clear cart
 function clearCart() {
-  saveCart([]);
+  cart = [];
+  sessionStorage.removeItem("cart");
+  //or use this
+  // sessionStorage.setItem("cart", JSON.stringify(cart));
   renderCart();
 }
-
-// Event listener for the clear cart button
-document.getElementById("clear-cart-btn").addEventListener("click", clearCart);
 
 // Initial render
-renderProductList();
-renderCart();
+renderProducts();
+// Check if there's an existing cart in session storage
+const storedCart = sessionStorage.getItem("cart");
+if (storedCart) {
+  cart = JSON.parse(storedCart);
+  renderCart();
+}
+
+// Add event listeners
+
+//1.for clear cart
+clearCartBtn.addEventListener("click", clearCart);
+
+// //from doubt support using forEach - this is simple - will pass accio test case
+// // but this is working only one time on page load  for remove-cart-button
+// document.querySelectorAll(".add-to-cart-btn").forEach((item) => {
+//   item.addEventListener("click", (event) => {
+//     console.log('click add')
+//     addToCart(parseInt(event.target.dataset.id));
+//   });
+// });
+
+// document.querySelectorAll(".remove-from-cart-btn").forEach((item) => {
+//   item.addEventListener("click", (event) => {
+//     console.log('click remove')
+//     removeFromCart(parseInt(event.target.dataset.id));
+//   });
+// });
+
+//same thing from S solution using event delegation
+// this is more efficient way. - and working perfectly all the way
+productList.addEventListener("click", (event) => {
+    if (event.target.classList.contains("add-to-cart-btn")) {
+      addToCart(parseInt(event.target.dataset.id));
+    }
+  });
+
+  cartList.addEventListener("click", (event) => {
+    if (event.target.classList.contains("remove-from-cart-btn")) {
+      removeFromCart(parseInt(event.target.dataset.id));
+    }
+  });
